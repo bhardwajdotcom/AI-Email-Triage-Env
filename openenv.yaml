@@ -1,0 +1,135 @@
+schema_version: v1
+name: ai-email-triage
+version: "1.0.0"
+description: >
+  A complete OpenEnv environment simulating real-world corporate email triage.
+  An AI agent reads incoming emails and must classify priority, route to the correct
+  department, detect spam/phishing, compose contextually appropriate draft responses,
+  and select follow-up actions. The environment provides partial-credit reward signals
+  at each step to enable effective reinforcement learning.
+
+domain: productivity
+tags:
+  - email
+  - triage
+  - nlp
+  - classification
+  - response-generation
+  - openenv
+
+tasks:
+  - id: task1
+    name: "Priority Classification"
+    difficulty: easy
+    num_steps: 5
+    reward_range: [0.0, 1.0]
+    description: >
+      Classify each of 5 emails as high, medium, or low priority.
+      Focus solely on urgency signals in the email content.
+
+  - id: task2
+    name: "Priority + Department Routing"
+    difficulty: medium
+    num_steps: 7
+    reward_range: [0.0, 1.0]
+    description: >
+      Triage 7 emails by assigning priority and routing to the correct department.
+      Must also identify spam and phishing attempts. Includes VIP escalations,
+      automated system alerts, and regulatory notices.
+
+  - id: task3
+    name: "Full Email Triage & Response"
+    difficulty: hard
+    num_steps: 10
+    reward_range: [0.0, 1.0]
+    description: >
+      Perform complete triage for 10 complex emails: classify priority, route to
+      department, detect spam/phishing, compose a contextually appropriate draft
+      response, and select follow-up actions. Includes security incidents, investor
+      communications, legal compliance notices, and VIP escalations.
+
+observation_space:
+  type: object
+  description: "Structured email observation"
+  fields:
+    email_id: {type: string, description: "Unique email identifier"}
+    from_address: {type: string, description: "Sender email address"}
+    from_name: {type: string, description: "Sender display name"}
+    to_address: {type: string, description: "Recipient email address"}
+    subject: {type: string, description: "Email subject line"}
+    body: {type: string, description: "Email body content"}
+    timestamp: {type: string, format: datetime, description: "ISO 8601 timestamp"}
+    attachments: {type: array, items: {filename: string, file_type: string, size_kb: integer}}
+    thread_history: {type: array, items: {sender: string, timestamp: string, body: string}}
+    labels: {type: array, items: string, description: "Existing email labels"}
+    is_reply: {type: boolean}
+    urgency_indicators: {type: array, items: string, description: "Detected urgency signals"}
+    task_id: {type: string}
+    step_number: {type: integer}
+    total_steps: {type: integer}
+
+action_space:
+  type: object
+  description: "Triage decision for an email"
+  fields:
+    priority:
+      type: string
+      enum: [high, medium, low]
+      description: "Assigned priority level"
+    department:
+      type: string
+      enum: [sales, support, engineering, hr, marketing, legal, executive, spam]
+      description: "Target department for routing"
+    response:
+      type: string
+      nullable: true
+      description: "Draft response text (required for task3)"
+    follow_up_actions:
+      type: array
+      items:
+        type: string
+        enum: [reply, escalate, schedule_meeting, create_ticket, archive, forward, flag_review, no_action]
+      description: "Recommended follow-up actions"
+    is_spam:
+      type: boolean
+      description: "True if email is spam or phishing"
+    confidence:
+      type: number
+      minimum: 0.0
+      maximum: 1.0
+    reasoning:
+      type: string
+      nullable: true
+      description: "Agent's reasoning for the decision"
+
+reward_space:
+  type: object
+  description: "Multi-dimensional reward breakdown"
+  fields:
+    total: {type: number, minimum: 0.0, maximum: 1.0, description: "Weighted total reward"}
+    priority_score: {type: number, minimum: 0.0, maximum: 1.0}
+    department_score: {type: number, minimum: 0.0, maximum: 1.0}
+    response_score: {type: number, minimum: 0.0, maximum: 1.0}
+    follow_up_score: {type: number, minimum: 0.0, maximum: 1.0}
+    spam_score: {type: number, minimum: 0.0, maximum: 1.0}
+    penalty: {type: number, minimum: 0.0, maximum: 1.0, description: "Penalty deductions"}
+    feedback: {type: string, description: "Human-readable reward explanation"}
+
+api:
+  reset: "POST /env/{task_id}/reset"
+  step: "POST /env/{task_id}/step"
+  state: "GET /env/{task_id}/state"
+  tasks: "GET /tasks"
+  evaluate: "POST /env/{task_id}/evaluate"
+
+baseline_scores:
+  model: "gpt-4o-mini"
+  task1: 0.82
+  task2: 0.71
+  task3: 0.63
+  weighted_overall: 0.70
+
+docker:
+  port: 7860
+  build: "docker build -t email-triage-env ."
+  run: "docker run -p 7860:7860 -e OPENAI_API_KEY=$OPENAI_API_KEY email-triage-env"
