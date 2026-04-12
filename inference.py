@@ -223,12 +223,12 @@ def run_task(client: openai.OpenAI, task_id: str) -> dict:
 
         obs = result.observation
 
-        state = env.state()
-        episode_score = state.cumulative_reward
+    state = env.state()
+    episode_score = state.cumulative_reward
 
-        print(f"[END] task={task_id} score={episode_score:.4f} steps={len(step_results)}", flush=True)
+    print(f"[END] task={task_id} score={episode_score:.4f} steps={len(step_results)}", flush=True)
 
-        return {
+    return {
         "task_id": task_id,
         "task_name": task_info.name,
         "difficulty": task_info.difficulty,
@@ -250,13 +250,13 @@ def main():
     args = parser.parse_args()
 
     if not OPENAI_API_KEY:
-    print("WARNING: OPENAI_API_KEY not set. Printing dummy structured output.", flush=True)
-    for task_id, task_info in TASKS.items():
-        print(f"[START] task={task_id}", flush=True)
-        for step in range(1, task_info.num_emails + 1):
-            print(f"[STEP] step={step} reward=0.0", flush=True)
-        print(f"[END] task={task_id} score=0.0 steps={task_info.num_emails}", flush=True)
-    sys.exit(0)
+        print("WARNING: OPENAI_API_KEY not set. Printing dummy structured output.", flush=True)
+        for task_id, task_info in TASKS.items():
+            print(f"[START] task={task_id}", flush=True)
+            for step in range(1, task_info.num_emails + 1):
+                print(f"[STEP] step={step} reward=0.0", flush=True)
+            print(f"[END] task={task_id} score=0.0 steps={task_info.num_emails}", flush=True)
+        sys.exit(0)
 
     client = openai.OpenAI(
         api_key=OPENAI_API_KEY,
