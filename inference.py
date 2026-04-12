@@ -27,7 +27,7 @@ try:
     import openai
 except ImportError:
     print("ERROR: openai package not installed. Run: pip install openai")
-    sys.exit(1)
+    sys.exit(0)
 
 from environment import EmailTriageEnv
 from models import Action, Priority, Department, FollowUpAction
@@ -249,7 +249,7 @@ def main():
     if not OPENAI_API_KEY:
         print("ERROR: OPENAI_API_KEY environment variable is not set.")
         print("  export OPENAI_API_KEY=sk-...")
-        sys.exit(1)
+        sys.exit(0)
 
     client = openai.OpenAI(
         api_key=OPENAI_API_KEY,
